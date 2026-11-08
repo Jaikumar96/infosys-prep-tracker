@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Infosys SP/DSE — 14-Day Battle Plan Tracker</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f0f1a;--card:#1a1a2e;--card2:#16213e;--accent:#e94560;--accent2:#0f3460;
+  --green:#00c853;--yellow:#ffd600;--orange:#ff9100;--blue:#448aff;--purple:#7c4dff;
+  --text:#e0e0e0;--text2:#9e9e9e;--border:#2a2a3e;
+}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;line-height:1.6;min-height:100vh}
+.container{max-width:1100px;margin:0 auto;padding:20px}
+
+/* Header */
+.header{text-align:center;padding:40px 20px 30px;position:relative;overflow:hidden}
+.header::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:200%;height:100%;background:radial-gradient(ellipse at center,rgba(233,69,96,0.15) 0%,transparent 70%)}
+.header h1{font-size:2.2em;font-weight:800;background:linear-gradient(135deg,#e94560,#7c4dff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;position:relative}
+.header .subtitle{color:var(--text2);font-size:1.05em}
+.countdown{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--accent);border-radius:12px;padding:12px 24px;margin-top:16px;font-size:1.1em;font-weight:600}
+.countdown .days-num{font-size:2em;color:var(--accent);font-weight:900;line-height:1}
+.countdown .days-label{color:var(--text2);font-size:0.75em}
+
+/* Progress Overview */
+.overview{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin:30px 0}
+.stat-card{background:var(--card);border-radius:14px;padding:20px;text-align:center;border:1px solid var(--border);transition:transform 0.2s,box-shadow 0.2s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(0,0,0,0.3)}
+.stat-card .number{font-size:2.4em;font-weight:900;line-height:1.1}
+.stat-card .label{color:var(--text2);font-size:0.85em;margin-top:4px}
+.stat-card.total .number{color:var(--blue)}
+.stat-card.done .number{color:var(--green)}
+.stat-card.streak .number{color:var(--orange)}
+.stat-card.hours .number{color:var(--purple)}
+
+/* Master Progress Bar */
+.master-progress{background:var(--card);border-radius:14px;padding:20px 24px;margin-bottom:30px;border:1px solid var(--border)}
+.master-progress .bar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.master-progress .bar-header h3{font-size:1em;color:var(--text2)}
+.master-progress .bar-header span{font-weight:700;color:var(--green)}
+.progress-bar{height:14px;background:#2a2a3e;border-radius:7px;overflow:hidden;position:relative}
+.progress-bar .fill{height:100%;border-radius:7px;transition:width 0.6s cubic-bezier(0.4,0,0.2,1);background:linear-gradient(90deg,var(--accent),var(--purple),var(--blue))}
+
+/* Phase Tabs */
+.phase-tabs{display:flex;gap:6px;margin-bottom:24px;flex-wrap:wrap}
+.phase-tab{padding:10px 20px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;font-weight:600;font-size:0.9em;transition:all 0.2s}
+.phase-tab:hover{border-color:var(--accent);color:var(--text)}
+.phase-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.phase-tab .badge{display:inline-block;background:rgba(255,255,255,0.15);border-radius:6px;padding:1px 7px;font-size:0.8em;margin-left:5px}
+
+/* Day Card */
+.day-card{background:var(--card);border-radius:14px;padding:24px;margin-bottom:16px;border:1px solid var(--border);transition:border-color 0.2s}
+.day-card.completed{border-color:var(--green)}
+.day-card.today{border-color:var(--accent);box-shadow:0 0 20px rgba(233,69,96,0.15)}
+.day-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.day-header .day-title{display:flex;align-items:center;gap:12px}
+.day-header .day-num{font-size:0.8em;font-weight:700;background:var(--accent2);color:var(--blue);padding:4px 12px;border-radius:8px}
+.day-header .day-topic{font-size:1.15em;font-weight:700}
+.day-header .day-date{color:var(--text2);font-size:0.85em}
+.day-header .day-progress{font-weight:700;font-size:0.9em}
+.day-meta{display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap}
+.day-meta span{display:flex;align-items:center;gap:5px;font-size:0.82em;color:var(--text2)}
+.day-meta .tag{padding:3px 10px;border-radius:6px;font-size:0.78em;font-weight:600}
+.tag-easy{background:rgba(0,200,83,0.15);color:#69f0ae}
+.tag-medium{background:rgba(255,209,0,0.15);color:#ffd600}
+.tag-hard{background:rgba(233,69,96,0.15);color:#e94560}
+.tag-dp{background:rgba(124,77,255,0.15);color:#b388ff}
+.tag-mock{background:rgba(68,138,255,0.15);color:#82b1ff}
+
+/* Problem List */
+.problem-list{list-style:none}
+.problem-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;margin-bottom:4px;transition:background 0.15s;cursor:pointer}
+.problem-item:hover{background:rgba(255,255,255,0.03)}
+.problem-item.checked{opacity:0.6}
+.problem-item.checked .problem-name{text-decoration:line-through}
+.problem-check{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s}
+.problem-item.checked .problem-check{background:var(--green);border-color:var(--green)}
+.problem-check svg{display:none;width:14px;height:14px}
+.problem-item.checked .problem-check svg{display:block}
+.problem-name{flex:1;font-size:0.92em}
+.problem-name a{color:var(--text);text-decoration:none;border-bottom:1px dashed var(--border);transition:color 0.2s}
+.problem-name a:hover{color:var(--accent)}
+.problem-diff{font-size:0.75em;padding:2px 8px;border-radius:5px;font-weight:600;flex-shrink:0}
+.problem-pattern{font-size:0.75em;color:var(--text2);flex-shrink:0}
+
+/* Day Input Row */
+.day-inputs{display:flex;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);flex-wrap:wrap;align-items:center}
+.day-inputs label{font-size:0.82em;color:var(--text2)}
+.day-inputs input[type=number]{width:60px;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:0.9em;text-align:center}
+.day-inputs select{padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:0.9em}
+.day-inputs input:focus,.day-inputs select:focus{outline:none;border-color:var(--accent)}
+.day-inputs .notes-input{flex:1;min-width:150px;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:0.9em}
+
+/* Theory Section */
+.theory-section{margin-top:14px;padding:14px;background:rgba(124,77,255,0.06);border-radius:10px;border:1px solid rgba(124,77,255,0.15)}
+.theory-section h4{font-size:0.85em;color:var(--purple);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.theory-item{display:flex;align-items:center;gap:10px;padding:5px 0;font-size:0.85em;cursor:pointer}
+.theory-item.checked{opacity:0.5;text-decoration:line-through}
+
+/* Templates Ref */
+.templates-ref{background:var(--card);border-radius:14px;padding:24px;margin:30px 0;border:1px solid var(--border)}
+.templates-ref h2{font-size:1.2em;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.pattern-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.pattern-card{background:var(--bg);border-radius:10px;padding:14px;border:1px solid var(--border)}
+.pattern-card h4{font-size:0.9em;margin-bottom:6px;color:var(--accent)}
+.pattern-card p{font-size:0.8em;color:var(--text2);margin-bottom:8px}
+.pattern-card code{display:block;font-size:0.78em;background:var(--card2);padding:8px;border-radius:6px;overflow-x:auto;white-space:pre;color:#b0bec5;line-height:1.5}
+
+/* Mock Timer */
+.mock-timer{text-align:center;background:var(--card);border-radius:14px;padding:30px;margin:16px 0;border:1px solid var(--accent)}
+.mock-timer .timer-display{font-size:3.5em;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:2px;margin:16px 0}
+.mock-timer button{padding:10px 28px;border-radius:10px;border:none;font-weight:700;font-size:1em;cursor:pointer;margin:0 6px;transition:transform 0.1s}
+.mock-timer button:active{transform:scale(0.96)}
+.btn-start{background:var(--green);color:#000}
+.btn-pause{background:var(--yellow);color:#000}
+.btn-reset{background:var(--accent);color:#fff}
+
+/* Cheat Sheet */
+.cheat-sheet{background:var(--card);border-radius:14px;padding:24px;margin:30px 0;border:1px solid var(--border)}
+.cheat-sheet h2{margin-bottom:16px}
+.cheat-table{width:100%;border-collapse:collapse;font-size:0.88em}
+.cheat-table th{text-align:left;padding:10px 14px;background:var(--accent2);color:var(--blue);font-weight:600;border-bottom:2px solid var(--border)}
+.cheat-table td{padding:10px 14px;border-bottom:1px solid var(--border)}
+.cheat-table tr:hover td{background:rgba(255,255,255,0.02)}
+
+/* Reset & Export */
+.actions{display:flex;gap:12px;margin:30px 0;flex-wrap:wrap;justify-content:center}
+.actions button{padding:10px 22px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);font-weight:600;cursor:pointer;font-size:0.9em;transition:all 0.2s}
+.actions button:hover{border-color:var(--accent);color:var(--accent)}
+.actions .btn-danger{border-color:#c62828;color:#ef5350}
+.actions .btn-danger:hover{background:#c62828;color:#fff}
+
+/* Motivation Banner */
+.motivation{text-align:center;padding:40px 20px;margin:30px 0}
+.motivation .quote{font-size:1.3em;font-weight:300;color:var(--text2);font-style:italic;max-width:600px;margin:0 auto}
+.motivation .author{color:var(--accent);margin-top:10px;font-weight:600}
+
+/* DP Focus Badge */
+.dp-focus{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(124,77,255,0.2),rgba(233,69,96,0.2));padding:6px 14px;border-radius:8px;font-size:0.8em;font-weight:700;color:#b388ff;border:1px solid rgba(124,77,255,0.3);margin-left:8px}
+
+/* Responsive */
+@media(max-width:600px){
+  .header h1{font-size:1.5em}
+  .overview{grid-template-columns:repeat(2,1fr)}
+  .day-header{flex-direction:column;align-items:flex-start}
+  .problem-item{flex-wrap:wrap}
+  .problem-pattern{display:none}
+  .phase-tabs{justify-content:center}
+}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.day-card{animation:fadeIn 0.3s ease}
+
+/* Hidden */
+.hidden{display:none!important}
+
+/* Footer */
+.footer{text-align:center;padding:30px;color:var(--text2);font-size:0.8em;border-top:1px solid var(--border);margin-top:40px}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <h1>🎯 Infosys SP/DSE — 14-Day Battle Plan</h1>
+    <p class="subtitle">Specialist Programmer & Digital Specialist Engineer — Coding Assessment Tracker</p>
+    <div class="countdown">
+      <div><div class="days-num" id="countdown-days">14</div><div class="days-label">days left</div></div>
+      <span style="color:var(--text2)">•</span>
+      <span>Exam: Nov 22, 2026</span>
+    </div>
+  </div>
+
+  <!-- Overview Stats -->
+  <div class="overview">
+    <div class="stat-card total"><div class="number" id="stat-total">0/72</div><div class="label">Problems Solved</div></div>
+    <div class="stat-card done"><div class="number" id="stat-days">0/14</div><div class="label">Days Completed</div></div>
+    <div class="stat-card streak"><div class="number" id="stat-streak">0</div><div class="label">Current Streak 🔥</div></div>
+    <div class="stat-card hours"><div class="number" id="stat-hours">0</div><div class="label">Hours Studied</div></div>
+  </div>
+
+  <!-- Master Progress -->
+  <div class="master-progress">
+    <div class="bar-header"><h3>Overall Progress</h3><span id="progress-pct">0%</span></div>
+    <div class="progress-bar"><div class="fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+
+  <!-- Phase Tabs -->
+  <div class="phase-tabs">
+    <div class="phase-tab active" data-phase="all">All Days</div>
+    <div class="phase-tab" data-phase="1">Phase 1 <span class="badge">Foundation</span></div>
+    <div class="phase-tab" data-phase="2">Phase 2 <span class="badge">DP Deep Dive</span></div>
+    <div class="phase-tab" data-phase="3">Phase 3 <span class="badge">Advanced + Mocks</span></div>
+    <div class="phase-tab" data-phase="4">Phase 4 <span class="badge">Final</span></div>
+  </div>
+
+  <!-- Day Cards Container -->
+  <div id="days-container"></div>
+
+  <!-- Pattern Cheat Sheet -->
+  <div class="cheat-sheet">
+    <h2>🧠 Pattern Recognition Cheat Sheet</h2>
+    <table class="cheat-table">
+      <thead><tr><th>If the question says...</th><th>Think of this pattern</th></tr></thead>
+      <tbody>
+        <tr><td>"Find pair/triplet with sum X"</td><td>Two Pointers (sorted) or HashMap</td></tr>
+        <tr><td>"Subarray with sum/product = K"</td><td>Prefix Sum + HashMap or Sliding Window</td></tr>
+        <tr><td>"Maximum/Minimum subarray"</td><td>Kadane's Algorithm</td></tr>
+        <tr><td>"Find in sorted array"</td><td>Binary Search</td></tr>
+        <tr><td>"Intervals, scheduling, meetings"</td><td>Sort by end time + Greedy</td></tr>
+        <tr><td>"Minimum cost/steps to reach"</td><td>DP or BFS</td></tr>
+        <tr><td>"Count ways to do X"</td><td>DP (usually 1D or 2D)</td></tr>
+        <tr><td>"Longest/Shortest subsequence"</td><td>DP (LCS / LIS pattern)</td></tr>
+        <tr><td>"Connected components / islands"</td><td>BFS or DFS</td></tr>
+        <tr><td>"Can partition into equal subsets"</td><td>0/1 Knapsack DP</td></tr>
+        <tr><td>"String matching / edit / transform"</td><td>2D DP (LCS / Edit Distance)</td></tr>
+        <tr><td>"Maximum profit with constraints"</td><td>DP + Binary Search or Greedy</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Mock Timer -->
+  <div class="mock-timer hidden" id="mock-timer-section">
+    <h2>⏱️ Mock Test Timer — 3 Hours</h2>
+    <p style="color:var(--text2);margin-top:6px">Simulate real exam conditions. No distractions.</p>
+    <div class="timer-display" id="timer-display">03:00:00</div>
+    <button class="btn-start" onclick="startTimer()">▶ Start</button>
+    <button class="btn-pause" onclick="pauseTimer()">⏸ Pause</button>
+    <button class="btn-reset" onclick="resetTimer()">↺ Reset</button>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <button onclick="exportProgress()">📋 Export Progress</button>
+    <button onclick="importProgress()">📥 Import Progress</button>
+    <button class="btn-danger" onclick="resetProgress()">🗑️ Reset All</button>
+  </div>
+
+  <!-- Motivation -->
+  <div class="motivation">
+    <p class="quote">"You don't need to be a genius. You need to see each pattern 5-10 times. That's ALL coding interviews test — pattern recognition."</p>
+    <p class="author">— Your 14-Day Battle Plan</p>
+  </div>
+
+  <div class="footer">
+    Built for the Infosys SP/DSE Assessment — Nov 22, 2026<br>
+    Progress saved locally in your browser. Keep going! 💪
+  </div>
+</div>
+
+<script>
+// =====================================================
+// DATA: 14-Day Plan (DP-Heavy for Infosys Round 2)
+// =====================================================
+const PLAN = [
+  {
+    day:1, date:"Nov 9", phase:1, topic:"Arrays & Strings Fundamentals",
+    tags:["Easy","Medium"],
+    problems:[
+      {name:"Two Sum",id:"two-sum",url:"https://leetcode.com/problems/two-sum/",diff:"Easy",pattern:"HashMap"},
+      {name:"Best Time to Buy & Sell Stock",id:"buy-sell-stock",url:"https://leetcode.com/problems/best-time-to-buy-and-sell-stock/",diff:"Easy",pattern:"Track Min"},
+      {name:"Maximum Subarray (Kadane's)",id:"max-subarray",url:"https://leetcode.com/problems/maximum-subarray/",diff:"Medium",pattern:"Kadane's"},
+      {name:"Contains Duplicate",id:"contains-dup",url:"https://leetcode.com/problems/contains-duplicate/",diff:"Easy",pattern:"HashSet"},
+      {name:"Sort Colors",id:"sort-colors",url:"https://leetcode.com/problems/sort-colors/",diff:"Medium",pattern:"Dutch Flag"},
+      {name:"Merge Intervals",id:"merge-intervals",url:"https://leetcode.com/problems/merge-intervals/",diff:"Medium",pattern:"Sort+Merge"},
+      {name:"Subarray Sum Equals K",id:"subarray-sum-k",url:"https://leetcode.com/problems/subarray-sum-equals-k/",diff:"Medium",pattern:"Prefix Sum"},
+    ],
+    theory:["Big-O Time/Space Complexity","Array traversal patterns: single-pass, two-pass, prefix sum","When to use HashMap vs HashSet vs Sorting"]
+  },
+  {
+    day:2, date:"Nov 10", phase:1, topic:"Two Pointers & Sliding Window",
+    tags:["Easy","Medium"],
+    problems:[
+      {name:"Valid Palindrome",id:"valid-palindrome",url:"https://leetcode.com/problems/valid-palindrome/",diff:"Easy",pattern:"Two Ptr"},
+      {name:"Two Sum II - Sorted",id:"two-sum-ii",url:"https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/",diff:"Medium",pattern:"Two Ptr"},
+      {name:"3Sum",id:"3sum",url:"https://leetcode.com/problems/3sum/",diff:"Medium",pattern:"Sort+TwoPtr"},
+      {name:"Container With Most Water",id:"container-water",url:"https://leetcode.com/problems/container-with-most-water/",diff:"Medium",pattern:"Two Ptr"},
+      {name:"Longest Substring Without Repeating",id:"longest-substr",url:"https://leetcode.com/problems/longest-substring-without-repeating-characters/",diff:"Medium",pattern:"Sliding Win"},
+      {name:"Minimum Size Subarray Sum",id:"min-size-subarray",url:"https://leetcode.com/problems/minimum-size-subarray-sum/",diff:"Medium",pattern:"Sliding Win"},
+    ],
+    theory:["Two Pointer: converging vs same-direction","Sliding Window: fixed vs variable, expand vs shrink","Watch NeetCode Sliding Window playlist"]
+  },
+  {
+    day:3, date:"Nov 11", phase:1, topic:"Sorting, Searching & Greedy Basics",
+    tags:["Easy","Medium"],
+    problems:[
+      {name:"Binary Search",id:"binary-search",url:"https://leetcode.com/problems/binary-search/",diff:"Easy",pattern:"Binary Search"},
+      {name:"Search in Rotated Sorted Array",id:"search-rotated",url:"https://leetcode.com/problems/search-in-rotated-sorted-array/",diff:"Medium",pattern:"Modified BS"},
+      {name:"Assign Cookies",id:"assign-cookies",url:"https://leetcode.com/problems/assign-cookies/",diff:"Easy",pattern:"Greedy"},
+      {name:"Jump Game",id:"jump-game",url:"https://leetcode.com/problems/jump-game/",diff:"Medium",pattern:"Greedy"},
+      {name:"Non-overlapping Intervals",id:"non-overlap",url:"https://leetcode.com/problems/non-overlapping-intervals/",diff:"Medium",pattern:"Interval Greedy"},
+      {name:"Boats to Save People",id:"boats",url:"https://leetcode.com/problems/boats-to-save-people/",diff:"Medium",pattern:"Sort+TwoPtr"},
+    ],
+    theory:["Binary Search template (memorize cold)","Greedy proof: local optimal → global optimal","Interval scheduling: always sort by end time"]
+  },
+  {
+    day:4, date:"Nov 12", phase:1, topic:"DP Foundations — Learn the Framework",
+    tags:["Easy","Medium","DP"],
+    problems:[
+      {name:"Climbing Stairs",id:"climb-stairs",url:"https://leetcode.com/problems/climbing-stairs/",diff:"Easy",pattern:"1D DP"},
+      {name:"House Robber",id:"house-robber",url:"https://leetcode.com/problems/house-robber/",diff:"Medium",pattern:"1D DP"},
+      {name:"Coin Change",id:"coin-change",url:"https://leetcode.com/problems/coin-change/",diff:"Medium",pattern:"Unbounded Knapsack"},
+      {name:"Unique Paths",id:"unique-paths",url:"https://leetcode.com/problems/unique-paths/",diff:"Medium",pattern:"Grid DP"},
+      {name:"Min Path Sum",id:"min-path-sum",url:"https://leetcode.com/problems/minimum-path-sum/",diff:"Medium",pattern:"Grid DP"},
+      {name:"Decode Ways",id:"decode-ways",url:"https://leetcode.com/problems/decode-ways/",diff:"Medium",pattern:"1D DP"},
+    ],
+    theory:["THE 5-step DP framework: State → Recurrence → Base → Order → Answer","Top-down (Memo) vs Bottom-up (Tabulation)","Watch Striver DP Series Lectures 1-5"]
+  },
+  {
+    day:5, date:"Nov 13", phase:2, topic:"DP Deep Dive — Knapsack & Subsequences",
+    tags:["Medium","DP"],
+    problems:[
+      {name:"Partition Equal Subset Sum",id:"partition-subset",url:"https://leetcode.com/problems/partition-equal-subset-sum/",diff:"Medium",pattern:"0/1 Knapsack"},
+      {name:"Target Sum",id:"target-sum",url:"https://leetcode.com/problems/target-sum/",diff:"Medium",pattern:"Count Subsets"},
+      {name:"Last Stone Weight II",id:"last-stone",url:"https://leetcode.com/problems/last-stone-weight-ii/",diff:"Medium",pattern:"Knapsack"},
+      {name:"Coin Change 2",id:"coin-change-2",url:"https://leetcode.com/problems/coin-change-ii/",diff:"Medium",pattern:"Unbounded KS"},
+      {name:"Longest Increasing Subsequence",id:"lis",url:"https://leetcode.com/problems/longest-increasing-subsequence/",diff:"Medium",pattern:"LIS DP"},
+      {name:"Is Subsequence",id:"is-subseq",url:"https://leetcode.com/problems/is-subsequence/",diff:"Easy",pattern:"Two Ptr/DP"},
+    ],
+    theory:["0/1 Knapsack: loop RIGHT-TO-LEFT for 1D array","Unbounded Knapsack: loop LEFT-TO-RIGHT","Subset Sum = special case of 0/1 Knapsack"]
+  },
+  {
+    day:6, date:"Nov 14", phase:2, topic:"DP Deep Dive — String DP (LCS, Edit Distance)",
+    tags:["Medium","Hard","DP"],
+    problems:[
+      {name:"Longest Common Subsequence",id:"lcs",url:"https://leetcode.com/problems/longest-common-subsequence/",diff:"Medium",pattern:"2D String DP"},
+      {name:"Edit Distance",id:"edit-dist",url:"https://leetcode.com/problems/edit-distance/",diff:"Medium",pattern:"2D String DP"},
+      {name:"Delete Operation for Two Strings",id:"delete-op",url:"https://leetcode.com/problems/delete-operation-for-two-strings/",diff:"Medium",pattern:"LCS Variant"},
+      {name:"Longest Palindromic Subsequence",id:"lps",url:"https://leetcode.com/problems/longest-palindromic-subsequence/",diff:"Medium",pattern:"LCS Reversed"},
+      {name:"Word Break",id:"word-break",url:"https://leetcode.com/problems/word-break/",diff:"Medium",pattern:"DP+HashSet"},
+      {name:"Distinct Subsequences",id:"distinct-subseq",url:"https://leetcode.com/problems/distinct-subsequences/",diff:"Hard",pattern:"2D DP"},
+    ],
+    theory:["Draw the 2D table on paper for LCS and Edit Distance","String DP = compare chars at positions i and j","Space optimization: rolling array (2 rows instead of full table)"]
+  },
+  {
+    day:7, date:"Nov 15", phase:2, topic:"DP Deep Dive — Grid DP & DP on Intervals",
+    tags:["Medium","Hard","DP"],
+    problems:[
+      {name:"Longest Increasing Path in Matrix",id:"lip-matrix",url:"https://leetcode.com/problems/longest-increasing-path-in-a-matrix/",diff:"Hard",pattern:"DFS+Memo"},
+      {name:"Maximal Square",id:"max-square",url:"https://leetcode.com/problems/maximal-square/",diff:"Medium",pattern:"Grid DP"},
+      {name:"Triangle Min Path",id:"triangle",url:"https://leetcode.com/problems/triangle/",diff:"Medium",pattern:"Grid DP"},
+      {name:"Burst Balloons",id:"burst-balloons",url:"https://leetcode.com/problems/burst-balloons/",diff:"Hard",pattern:"Interval DP (MCM)"},
+      {name:"Palindrome Partitioning II",id:"palindrome-part",url:"https://leetcode.com/problems/palindrome-partitioning-ii/",diff:"Hard",pattern:"Partition DP"},
+      {name:"Maximum Profit in Job Scheduling",id:"job-scheduling",url:"https://leetcode.com/problems/maximum-profit-in-job-scheduling/",diff:"Hard",pattern:"DP+BinarySearch"},
+    ],
+    theory:["MCM (Matrix Chain Multiplication) pattern","Interval DP: dp[i][j] = best answer for range [i..j]","DP+Binary Search combo for scheduling problems"]
+  },
+  {
+    day:8, date:"Nov 16", phase:2, topic:"Graphs + More DP Practice",
+    tags:["Medium","DP"],
+    problems:[
+      {name:"Number of Islands",id:"num-islands",url:"https://leetcode.com/problems/number-of-islands/",diff:"Medium",pattern:"DFS/BFS Grid"},
+      {name:"Rotting Oranges",id:"rotting-oranges",url:"https://leetcode.com/problems/rotting-oranges/",diff:"Medium",pattern:"Multi-BFS"},
+      {name:"Course Schedule",id:"course-schedule",url:"https://leetcode.com/problems/course-schedule/",diff:"Medium",pattern:"Topological Sort"},
+      {name:"House Robber II",id:"house-robber-2",url:"https://leetcode.com/problems/house-robber-ii/",diff:"Medium",pattern:"Circular DP"},
+      {name:"Ones and Zeroes",id:"ones-zeroes",url:"https://leetcode.com/problems/ones-and-zeroes/",diff:"Medium",pattern:"2D Knapsack"},
+      {name:"Minimum Cost for Tickets",id:"min-cost-tickets",url:"https://leetcode.com/problems/minimum-cost-for-tickets/",diff:"Medium",pattern:"1D DP"},
+    ],
+    theory:["Graph: adjacency list, BFS template, DFS template","Kahn's Algorithm for Topological Sort","Circular DP = run DP twice (exclude first, exclude last)"]
+  },
+  {
+    day:9, date:"Nov 17", phase:3, topic:"Hard DP Marathon (SP-Level Questions)",
+    tags:["Hard","DP"],
+    problems:[
+      {name:"Longest Valid Parentheses",id:"longest-valid-paren",url:"https://leetcode.com/problems/longest-valid-parentheses/",diff:"Hard",pattern:"Stack/DP"},
+      {name:"Interleaving String",id:"interleave",url:"https://leetcode.com/problems/interleaving-string/",diff:"Medium",pattern:"2D DP"},
+      {name:"Regular Expression Matching",id:"regex-match",url:"https://leetcode.com/problems/regular-expression-matching/",diff:"Hard",pattern:"2D DP"},
+      {name:"Minimum Path Sum in Grid",id:"min-path-grid",url:"https://leetcode.com/problems/minimum-path-sum/",diff:"Medium",pattern:"Grid DP"},
+      {name:"Best Time Buy Sell Stock with Cooldown",id:"stock-cooldown",url:"https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown/",diff:"Medium",pattern:"State Machine DP"},
+    ],
+    theory:["State Machine DP for stock problems","Regex/Wildcard matching = 2D DP with char comparison","Review ALL DP patterns: 1D, 2D, Knapsack, String, Grid, Interval"]
+  },
+  {
+    day:10, date:"Nov 18", phase:3, topic:"🔴 MOCK TEST 1 — Full 3-Hour Simulation",
+    tags:["Mock"],
+    isMock:true,
+    problems:[
+      {name:"Mock Q1: Top K Frequent Elements",id:"mock1-q1",url:"https://leetcode.com/problems/top-k-frequent-elements/",diff:"Easy",pattern:"HashMap+Sort"},
+      {name:"Mock Q2: Meeting Rooms / Min Platforms",id:"mock1-q2",url:"https://leetcode.com/problems/meeting-rooms-ii/",diff:"Medium",pattern:"Event Line"},
+      {name:"Mock Q3: Coin Change (DP)",id:"mock1-q3",url:"https://leetcode.com/problems/coin-change/",diff:"Hard",pattern:"Unbounded KS DP"},
+    ],
+    theory:["After mock: Write what went wrong","Time analysis: did I spend too long on any question?","Review solutions for anything not solved"]
+  },
+  {
+    day:11, date:"Nov 19", phase:3, topic:"🔴 MOCK TEST 2 + Weak Area Attack",
+    tags:["Mock","DP"],
+    isMock:true,
+    problems:[
+      {name:"Mock Q1: Rotate String",id:"mock2-q1",url:"https://leetcode.com/problems/rotate-string/",diff:"Easy",pattern:"String Concat"},
+      {name:"Mock Q2: Car Pooling (Greedy)",id:"mock2-q2",url:"https://leetcode.com/problems/car-pooling/",diff:"Medium",pattern:"Diff Array"},
+      {name:"Mock Q3: LCS (DP)",id:"mock2-q3",url:"https://leetcode.com/problems/longest-common-subsequence/",diff:"Hard",pattern:"2D String DP"},
+    ],
+    theory:["Attack weakest area from Mock 1","Re-solve any DP problem you couldn't crack","Practice writing code WITHOUT IDE autocomplete"]
+  },
+  {
+    day:12, date:"Nov 20", phase:3, topic:"🔴 MOCK TEST 3 + CS Fundamentals",
+    tags:["Mock","DP"],
+    isMock:true,
+    problems:[
+      {name:"Mock Q1: Next Permutation",id:"mock3-q1",url:"https://leetcode.com/problems/next-permutation/",diff:"Medium",pattern:"Array Logic"},
+      {name:"Mock Q2: Non-overlapping Intervals",id:"mock3-q2",url:"https://leetcode.com/problems/non-overlapping-intervals/",diff:"Medium",pattern:"Interval Greedy"},
+      {name:"Mock Q3: Partition Equal Subset Sum (DP)",id:"mock3-q3",url:"https://leetcode.com/problems/partition-equal-subset-sum/",diff:"Hard",pattern:"0/1 Knapsack DP"},
+    ],
+    theory:["OOPs: 4 pillars","DBMS: Normalization, ACID, SQL queries","OS: Deadlock conditions, Process vs Thread"]
+  },
+  {
+    day:13, date:"Nov 21", phase:4, topic:"Final Revision — Pattern Speed Drill",
+    tags:["Revision"],
+    problems:[
+      {name:"Revision: Kadane's (write from memory)",id:"rev-kadane",url:"https://leetcode.com/problems/maximum-subarray/",diff:"Easy",pattern:"Kadane's"},
+      {name:"Revision: Sliding Window (from memory)",id:"rev-sliding",url:"https://leetcode.com/problems/longest-substring-without-repeating-characters/",diff:"Medium",pattern:"Sliding Win"},
+      {name:"Revision: 0/1 Knapsack (from memory)",id:"rev-knapsack",url:"https://leetcode.com/problems/partition-equal-subset-sum/",diff:"Medium",pattern:"Knapsack DP"},
+      {name:"Revision: LCS (from memory)",id:"rev-lcs",url:"https://leetcode.com/problems/longest-common-subsequence/",diff:"Medium",pattern:"String DP"},
+      {name:"Revision: BFS Grid (from memory)",id:"rev-bfs",url:"https://leetcode.com/problems/number-of-islands/",diff:"Medium",pattern:"BFS/DFS"},
+      {name:"Revision: Greedy Intervals (from memory)",id:"rev-greedy",url:"https://leetcode.com/problems/non-overlapping-intervals/",diff:"Medium",pattern:"Interval Greedy"},
+    ],
+    theory:["Edge cases: empty arrays, single element, all same, negatives","Integer overflow: use long in Java","Off-by-one errors in loops","Sleep early! 10 PM max."]
+  },
+  {
+    day:14, date:"Nov 22", phase:4, topic:"🎯 EXAM DAY — You've Got This!",
+    tags:["Exam"],
+    problems:[
+      {name:"Light breakfast, stay hydrated",id:"exam-prep",url:"#",diff:"Easy",pattern:"Self Care"},
+      {name:"Arrive 30 min early",id:"exam-arrive",url:"#",diff:"Easy",pattern:"Logistics"},
+      {name:"Read ALL 3 questions before coding (5 min)",id:"exam-read",url:"#",diff:"Easy",pattern:"Strategy"},
+    ],
+    theory:["Q1 in 30 min → Q2 in 50 min → Q3 in 100 min","If stuck: write brute force for partial marks","NEVER submit without testing with given examples"]
+  }
+];
+
+// =====================================================
+// STATE MANAGEMENT (localStorage)
+// =====================================================
+const STORAGE_KEY = 'infosys-tracker-v2';
+
+function loadState(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){try{return JSON.parse(raw)}catch(e){}}
+  return {problems:{},theory:{},dayMeta:{}};
+}
+function saveState(state){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
+let state = loadState();
+
+// =====================================================
+// TIMER
+// =====================================================
+let timerInterval = null;
+let timerSeconds = 3*60*60;
+
+function formatTime(s){
+  const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);const sec=s%60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+function updateTimerDisplay(){document.getElementById('timer-display').textContent=formatTime(timerSeconds)}
+function startTimer(){
+  if(timerInterval)return;
+  timerInterval=setInterval(()=>{
+    if(timerSeconds>0){timerSeconds--;updateTimerDisplay()}
+    else{clearInterval(timerInterval);timerInterval=null;alert('⏰ Time is up! Submit your solutions.')}
+  },1000);
+}
+function pauseTimer(){if(timerInterval){clearInterval(timerInterval);timerInterval=null}}
+function resetTimer(){pauseTimer();timerSeconds=3*60*60;updateTimerDisplay()}
+
+// =====================================================
+// COUNTDOWN
+// =====================================================
+function updateCountdown(){
+  const exam = new Date(2026,10,22);
+  const now = new Date();
+  const diff = Math.ceil((exam-now)/(1000*60*60*24));
+  document.getElementById('countdown-days').textContent = Math.max(0,diff);
+}
+
+// =====================================================
+// RENDER
+// =====================================================
+function toggleProblem(id){
+  state.problems[id] = !state.problems[id];
+  saveState(state);
+  render();
+}
+function toggleTheory(id){
+  state.theory[id] = !state.theory[id];
+  saveState(state);
+  render();
+}
+function updateDayMeta(day,field,value){
+  if(!state.dayMeta[day])state.dayMeta[day]={};
+  state.dayMeta[day][field]=value;
+  saveState(state);
+  updateStats();
+}
+
+function render(){
+  const container = document.getElementById('days-container');
+  const activePhase = document.querySelector('.phase-tab.active').dataset.phase;
+  
+  // Determine today
+  const now = new Date();
+  const dayMap = {9:1,10:2,11:3,12:4,13:5,14:6,15:7,16:8,17:9,18:10,19:11,20:12,21:13,22:14};
+  const todayDay = (now.getMonth()===10) ? (dayMap[now.getDate()]||0) : 0;
+
+  let html = '';
+  PLAN.forEach(day => {
+    if(activePhase!=='all' && String(day.phase)!==activePhase) return;
+
+    const solved = day.problems.filter(p=>state.problems[p.id]).length;
+    const total = day.problems.length;
+    const pct = total>0?Math.round(solved/total*100):0;
+    const isComplete = solved===total;
+    const isToday = day.day===todayDay;
+    const isMock = day.isMock;
+
+    html += `<div class="day-card ${isComplete?'completed':''} ${isToday?'today':''}">`;
+    html += `<div class="day-header">`;
+    html += `<div class="day-title">`;
+    html += `<span class="day-num">DAY ${day.day}</span>`;
+    html += `<span class="day-topic">${day.topic}</span>`;
+    if(day.tags.includes('DP'))html+=`<span class="dp-focus">🧠 DP Focus</span>`;
+    html += `</div>`;
+    html += `<div><span class="day-date">${day.date}</span> &nbsp; <span class="day-progress" style="color:${isComplete?'var(--green)':pct>0?'var(--yellow)':'var(--text2)'}">${solved}/${total} (${pct}%)</span></div>`;
+    html += `</div>`;
+
+    // Tags
+    html += `<div class="day-meta">`;
+    day.tags.forEach(t=>{
+      let cls='';
+      if(t==='Easy')cls='tag-easy';else if(t==='Medium')cls='tag-medium';else if(t==='Hard')cls='tag-hard';else if(t==='DP')cls='tag-dp';else if(t==='Mock')cls='tag-mock';
+      html+=`<span class="tag ${cls}">${t}</span>`;
+    });
+    html+=`</div>`;
+
+    // Show mock timer button
+    if(isMock){
+      html+=`<div style="margin-bottom:12px"><button onclick="document.getElementById('mock-timer-section').classList.toggle('hidden');window.scrollTo({top:document.getElementById('mock-timer-section').offsetTop-20,behavior:'smooth'})" style="padding:8px 16px;border-radius:8px;border:1px solid var(--accent);background:transparent;color:var(--accent);cursor:pointer;font-weight:600;font-size:0.85em">⏱️ Open 3-Hour Timer</button></div>`;
+    }
+
+    // Problems
+    html += `<ul class="problem-list">`;
+    day.problems.forEach(p=>{
+      const checked = state.problems[p.id];
+      html += `<li class="problem-item ${checked?'checked':''}" onclick="toggleProblem('${p.id}')">`;
+      html += `<div class="problem-check"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>`;
+      html += `<div class="problem-name"><a href="${p.url}" target="_blank" onclick="event.stopPropagation()">${p.name}</a></div>`;
+      html += `<span class="problem-diff tag ${p.diff==='Easy'?'tag-easy':p.diff==='Medium'?'tag-medium':'tag-hard'}">${p.diff}</span>`;
+      html += `<span class="problem-pattern">${p.pattern}</span>`;
+      html += `</li>`;
+    });
+    html += `</ul>`;
+
+    // Theory
+    if(day.theory && day.theory.length){
+      html += `<div class="theory-section"><h4>📖 Theory & Study Tasks</h4>`;
+      day.theory.forEach((t,idx)=>{
+        const tid = `theory-${day.day}-${idx}`;
+        const tchecked = state.theory[tid];
+        html+=`<div class="theory-item ${tchecked?'checked':''}" onclick="toggleTheory('${tid}')">${tchecked?'☑':'☐'} ${t}</div>`;
+      });
+      html+=`</div>`;
+    }
+
+    // Day inputs
+    const meta = state.dayMeta[day.day]||{};
+    html+=`<div class="day-inputs">`;
+    html+=`<label>Hours:</label><input type="number" min="0" max="16" value="${meta.hours||''}" onchange="updateDayMeta(${day.day},'hours',this.value)" placeholder="0">`;
+    html+=`<label>Confidence:</label><select onchange="updateDayMeta(${day.day},'confidence',this.value)"><option value="">—</option><option value="1" ${meta.confidence==='1'?'selected':''}>1 ❌</option><option value="2" ${meta.confidence==='2'?'selected':''}>2 😟</option><option value="3" ${meta.confidence==='3'?'selected':''}>3 😐</option><option value="4" ${meta.confidence==='4'?'selected':''}>4 😊</option><option value="5" ${meta.confidence==='5'?'selected':''}>5 🔥</option></select>`;
+    html+=`<input class="notes-input" type="text" placeholder="Notes for today..." value="${meta.notes||''}" onchange="updateDayMeta(${day.day},'notes',this.value)">`;
+    html+=`</div>`;
+
+    html += `</div>`;
+  });
+
+  container.innerHTML = html;
+  updateStats();
+}
+
+function updateStats(){
+  const totalProblems = PLAN.reduce((s,d)=>s+d.problems.length,0);
+  const solvedProblems = PLAN.reduce((s,d)=>s+d.problems.filter(p=>state.problems[p.id]).length,0);
+  
+  let completedDays = 0;
+  PLAN.forEach(d=>{
+    if(d.problems.every(p=>state.problems[p.id]))completedDays++;
+  });
+
+  // Streak
+  let streak=0;
+  for(let i=0;i<PLAN.length;i++){
+    if(PLAN[i].problems.every(p=>state.problems[p.id]))streak++;
+    else break;
+  }
+
+  // Hours
+  let hours=0;
+  Object.values(state.dayMeta||{}).forEach(m=>{hours+=parseFloat(m.hours||0)});
+
+  document.getElementById('stat-total').textContent=`${solvedProblems}/${totalProblems}`;
+  document.getElementById('stat-days').textContent=`${completedDays}/14`;
+  document.getElementById('stat-streak').textContent=streak;
+  document.getElementById('stat-hours').textContent=Math.round(hours);
+
+  const pct = totalProblems>0?Math.round(solvedProblems/totalProblems*100):0;
+  document.getElementById('progress-pct').textContent=pct+'%';
+  document.getElementById('progress-fill').style.width=pct+'%';
+}
+
+// Phase tabs
+document.querySelectorAll('.phase-tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.phase-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    render();
+  });
+});
+
+// Export/Import
+function exportProgress(){
+  const data = JSON.stringify(state,null,2);
+  const blob = new Blob([data],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url;a.download='infosys-progress.json';a.click();
+  URL.revokeObjectURL(url);
+}
+function importProgress(){
+  const input = document.createElement('input');
+  input.type='file';input.accept='.json';
+  input.onchange=e=>{
+    const file=e.target.files[0];
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{state=JSON.parse(ev.target.result);saveState(state);render();alert('✅ Progress imported!')}
+      catch(err){alert('❌ Invalid file')}
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+function resetProgress(){
+  if(confirm('⚠️ This will reset ALL your progress. Are you sure?')){
+    state={problems:{},theory:{},dayMeta:{}};
+    saveState(state);render();
+  }
+}
+
+// Init
+updateCountdown();
+render();
+setInterval(updateCountdown,60000);
+</script>
+</body>
+</html>
